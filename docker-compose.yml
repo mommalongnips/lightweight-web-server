@@ -1,0 +1,13 @@
+services:
+  fileshare:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    environment:
+      - DATA_DIR=/data
+      - MASTER_PASSWORD=changeme
+      # - MAX_UPLOAD_SIZE=10737418240
+      # - PORT=8080
+    restart: unless-stopped

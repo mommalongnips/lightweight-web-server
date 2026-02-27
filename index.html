@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Share</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #242836;
+  --border: #2e3344;
+  --text: #e4e6f0;
+  --text2: #8b8fa3;
+  --accent: #6c8aff;
+  --accent-hover: #8ba3ff;
+  --danger: #ff6b6b;
+  --danger-hover: #ff8787;
+  --success: #51cf66;
+  --radius: 8px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Login */
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.login-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+}
+
+.login-box h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.login-box p {
+  color: var(--text2);
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.login-box input {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s;
+}
+
+.login-box input:focus { border-color: var(--accent); }
+
+.login-error {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  min-height: 1.3em;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn:hover { background: var(--border); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { background: rgba(255,107,107,0.1); }
+.btn-sm { padding: 0.35rem 0.65rem; font-size: 0.8rem; }
+.btn-block { width: 100%; justify-content: center; }
+
+/* Layout */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+header h1 { font-size: 1.3rem; font-weight: 600; }
+
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Breadcrumbs */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.breadcrumbs a {
+  color: var(--accent);
+  text-decoration: none;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.breadcrumbs a:hover { background: var(--surface2); }
+.breadcrumbs .sep { color: var(--text2); user-select: none; }
+
+/* Drop zone */
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  text-align: center;
+  color: var(--text2);
+  transition: all 0.2s;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.dropzone.active {
+  border-color: var(--accent);
+  background: rgba(108,138,255,0.05);
+  color: var(--accent);
+}
+
+.dropzone-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* File table */
+.file-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.file-table th {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+}
+
+.file-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.file-table tr:hover td { background: var(--surface); }
+
+.file-table .name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.file-table .name-cell a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.file-table .name-cell a:hover { color: var(--accent); }
+
+.file-icon {
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.3rem;
+  justify-content: flex-end;
+}
+
+.size-cell, .date-cell { color: var(--text2); white-space: nowrap; }
+
+/* Upload progress */
+.upload-progress {
+  margin-bottom: 1rem;
+  display: none;
+}
+
+.upload-progress.active { display: block; }
+
+.progress-bar {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.3s;
+}
+
+.progress-text {
+  font-size: 0.8rem;
+  color: var(--text2);
+  margin-top: 0.35rem;
+}
+
+/* New folder inline */
+.new-folder-row input {
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.65rem;
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  width: 200px;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text2);
+}
+
+.empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; display: block; }
+
+/* Confirm dialog */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.75rem;
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal h3 { margin-bottom: 0.75rem; }
+.modal p { color: var(--text2); margin-bottom: 1.25rem; font-size: 0.9rem; }
+.modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .container { padding: 1rem; }
+  .date-cell { display: none; }
+  .toolbar { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div id="login-screen" style="display:none">
+  <div class="login-box">
+    <h1>File Share</h1>
+    <p>Enter the password to continue</p>
+    <div class="login-error" id="login-error"></div>
+    <input type="password" id="login-password" placeholder="Password" autofocus>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">Log In</button>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="container">
+    <header>
+      <h1>File Share</h1>
+      <div class="toolbar">
+        <button class="btn" onclick="showNewFolder()" title="New Folder">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+          New Folder
+        </button>
+        <button class="btn btn-primary" onclick="fileInput.click()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload
+        </button>
+        <input type="file" id="fileInput" multiple style="display:none" onchange="uploadFiles(this.files)">
+      </div>
+    </header>
+
+    <nav class="breadcrumbs" id="breadcrumbs"></nav>
+
+    <div class="dropzone" id="dropzone">
+      <span class="dropzone-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </span>
+      Drop files here to upload
+    </div>
+
+    <div class="upload-progress" id="upload-progress">
+      <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill"></div></div>
+      <div class="progress-text" id="progress-text">Uploading...</div>
+    </div>
+
+    <table class="file-table" id="file-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Size</th>
+          <th class="date-cell">Modified</th>
+          <th style="text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="file-list"></tbody>
+    </table>
+
+    <div class="empty-state" id="empty-state" style="display:none">
+      <span class="empty-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </span>
+      <p>This folder is empty</p>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="confirm-modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3>Delete</h3>
+    <p id="confirm-text">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" style="background:var(--danger);border-color:var(--danger)" id="confirm-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPath = '/';
+const fileInput = document.getElementById('fileInput');
+
+// --- Init ---
+async function init() {
+  const res = await fetch('/api/auth/check');
+  const data = await res.json();
+  if (data.required && !data.authenticated) {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('login-password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  } else {
+    showApp();
+  }
+}
+
+async function doLogin() {
+  const pw = document.getElementById('login-password').value;
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({password: pw})
+  });
+  if (res.ok) {
+    document.getElementById('login-error').textContent = '';
+    showApp();
+  } else {
+    document.getElementById('login-error').textContent = 'Wrong password';
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-password').focus();
+  }
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  navigate('/');
+}
+
+// --- Navigation ---
+function navigate(path) {
+  currentPath = path;
+  loadFiles();
+  renderBreadcrumbs();
+}
+
+function renderBreadcrumbs() {
+  const bc = document.getElementById('breadcrumbs');
+  const parts = currentPath.split('/').filter(Boolean);
+  let html = '<a href="#" onclick="navigate(\'/\');return false">Home</a>';
+  let accumulated = '';
+  for (const part of parts) {
+    accumulated += '/' + part;
+    const p = accumulated;
+    html += '<span class="sep">/</span>';
+    html += `<a href="#" onclick="navigate('${esc(p)}');return false">${esc(part)}</a>`;
+  }
+  bc.innerHTML = html;
+}
+
+// --- File Listing ---
+async function loadFiles() {
+  try {
+    const res = await fetch('/api/files?path=' + encodeURIComponent(currentPath));
+    if (res.status === 401) { location.reload(); return; }
+    const files = await res.json();
+    renderFiles(files);
+  } catch (e) {
+    console.error('Failed to load files:', e);
+  }
+}
+
+function renderFiles(files) {
+  const tbody = document.getElementById('file-list');
+  const empty = document.getElementById('empty-state');
+  const table = document.getElementById('file-table');
+
+  if (!files || files.length === 0) {
+    tbody.innerHTML = '';
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  table.style.display = '';
+  empty.style.display = 'none';
+
+  // Sort: folders first, then alphabetical
+  files.sort((a, b) => {
+    if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  tbody.innerHTML = files.map(f => {
+    const filePath = currentPath === '/' ? '/' + f.name : currentPath + '/' + f.name;
+    const icon = f.isDir ? folderIcon() : fileIcon(f.name);
+
+    let nameHtml;
+    if (f.isDir) {
+      nameHtml = `<a href="#" onclick="navigate('${esc(filePath)}');return false">${esc(f.name)}</a>`;
+    } else {
+      nameHtml = `<span>${esc(f.name)}</span>`;
+    }
+
+    let actions = '';
+    if (f.isDir) {
+      actions += `<button class="btn btn-sm" onclick="downloadZip('${esc(filePath)}')" title="Download as ZIP">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        ZIP</button>`;
+    } else {
+      actions += `<button class="btn btn-sm" onclick="downloadFile('${esc(filePath)}')" title="Download">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>`;
+    }
+    actions += `<button class="btn btn-sm btn-danger" onclick="confirmDelete('${esc(filePath)}','${esc(f.name)}',${f.isDir})" title="Delete">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`;
+
+    return `<tr>
+      <td><div class="name-cell">${icon}${nameHtml}</div></td>
+      <td class="size-cell">${f.isDir ? '—' : formatSize(f.size)}</td>
+      <td class="date-cell size-cell">${formatDate(f.modified)}</td>
+      <td><div class="actions-cell">${actions}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+// --- Upload ---
+function setupDropzone() {
+  const dz = document.getElementById('dropzone');
+  let dragCounter = 0;
+
+  document.addEventListener('dragenter', e => {
+    e.preventDefault();
+    dragCounter++;
+    dz.classList.add('active');
+  });
+
+  document.addEventListener('dragleave', e => {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      dz.classList.remove('active');
+    }
+  });
+
+  document.addEventListener('dragover', e => e.preventDefault());
+
+  document.addEventListener('drop', e => {
+    e.preventDefault();
+    dragCounter = 0;
+    dz.classList.remove('active');
+    if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
+  });
+
+  dz.addEventListener('click', () => fileInput.click());
+}
+
+async function uploadFiles(files) {
+  if (!files.length) return;
+  const formData = new FormData();
+  for (const f of files) formData.append('files', f);
+
+  const progress = document.getElementById('upload-progress');
+  const fill = document.getElementById('progress-fill');
+  const text = document.getElementById('progress-text');
+  progress.classList.add('active');
+  fill.style.width = '0%';
+  text.textContent = `Uploading ${files.length} file${files.length > 1 ? 's' : ''}...`;
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/upload?path=' + encodeURIComponent(currentPath));
+
+  xhr.upload.onprogress = e => {
+    if (e.lengthComputable) {
+      const pct = Math.round(e.loaded / e.total * 100);
+      fill.style.width = pct + '%';
+      text.textContent = `Uploading... ${pct}%`;
+    }
+  };
+
+  xhr.onload = () => {
+    fill.style.width = '100%';
+    text.textContent = 'Upload complete';
+    setTimeout(() => progress.classList.remove('active'), 1500);
+    loadFiles();
+    fileInput.value = '';
+  };
+
+  xhr.onerror = () => {
+    text.textContent = 'Upload failed';
+    setTimeout(() => progress.classList.remove('active'), 2000);
+    fileInput.value = '';
+  };
+
+  xhr.send(formData);
+}
+
+// --- Download ---
+function downloadFile(path) {
+  window.location.href = '/api/download?path=' + encodeURIComponent(path);
+}
+
+function downloadZip(path) {
+  window.location.href = '/api/download-zip?path=' + encodeURIComponent(path);
+}
+
+// --- New Folder ---
+function showNewFolder() {
+  const tbody = document.getElementById('file-list');
+  const table = document.getElementById('file-table');
+  const empty = document.getElementById('empty-state');
+
+  table.style.display = '';
+  empty.style.display = 'none';
+
+  // Remove existing new-folder row if any
+  const existing = document.querySelector('.new-folder-row');
+  if (existing) { existing.remove(); return; }
+
+  const row = document.createElement('tr');
+  row.className = 'new-folder-row';
+  row.innerHTML = `<td colspan="4">
+    <div class="name-cell" style="gap:0.5rem">
+      ${folderIcon()}
+      <input type="text" placeholder="Folder name" autofocus>
+      <button class="btn btn-sm btn-primary" onclick="createFolder(this)">Create</button>
+      <button class="btn btn-sm" onclick="this.closest('tr').remove()">Cancel</button>
+    </div>
+  </td>`;
+  tbody.insertBefore(row, tbody.firstChild);
+
+  const input = row.querySelector('input');
+  input.focus();
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') createFolder(input);
+    if (e.key === 'Escape') row.remove();
+  });
+}
+
+async function createFolder(el) {
+  const input = el.closest('tr').querySelector('input');
+  const name = input.value.trim();
+  if (!name) return;
+  const res = await fetch('/api/mkdir', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({path: currentPath, name: name})
+  });
+  if (res.ok) {
+    loadFiles();
+  } else {
+    const msg = await res.text();
+    alert(msg || 'Failed to create folder');
+  }
+}
+
+// --- Delete ---
+function confirmDelete(path, name, isDir) {
+  const modal = document.getElementById('confirm-modal');
+  document.getElementById('confirm-text').textContent =
+    `Delete ${isDir ? 'folder' : 'file'} "${name}"${isDir ? ' and all its contents' : ''}?`;
+  modal.style.display = 'flex';
+  document.getElementById('confirm-btn').onclick = async () => {
+    closeModal();
+    const res = await fetch('/api/delete?path=' + encodeURIComponent(path), {method: 'DELETE'});
+    if (res.ok) loadFiles();
+    else alert('Failed to delete');
+  };
+}
+
+function closeModal() {
+  document.getElementById('confirm-modal').style.display = 'none';
+}
+
+// --- Helpers ---
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
+function formatSize(bytes) {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return (bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0) + ' ' + units[i];
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
+}
+
+function folderIcon() {
+  return `<span class="file-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#6c8aff" stroke="#6c8aff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>`;
+}
+
+function fileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const colors = {
+    pdf: '#ff6b6b', doc: '#6c8aff', docx: '#6c8aff', xls: '#51cf66', xlsx: '#51cf66',
+    png: '#fcc419', jpg: '#fcc419', jpeg: '#fcc419', gif: '#fcc419', svg: '#fcc419', webp: '#fcc419',
+    mp4: '#cc5de8', mkv: '#cc5de8', avi: '#cc5de8', mov: '#cc5de8',
+    mp3: '#ff922b', wav: '#ff922b', flac: '#ff922b',
+    zip: '#868e96', rar: '#868e96', '7z': '#868e96', tar: '#868e96', gz: '#868e96',
+    js: '#fcc419', ts: '#6c8aff', py: '#51cf66', go: '#20c997', rs: '#ff922b',
+  };
+  const c = colors[ext] || '#868e96';
+  return `<span class="file-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>`;
+}
+
+// Keyboard shortcut: Escape to close modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// Boot
+setupDropzone();
+init();
+</script>
+</body>
+</html>
